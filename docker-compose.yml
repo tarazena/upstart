@@ -1,0 +1,79 @@
+# Ease local api development by providing the db / graphql layers only
+
+version: "3.7"
+
+services:
+  db:
+    image: postgres:11.7-alpine
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "testing"
+      POSTGRES_DB: "mydb"
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  api:
+    image: node:18
+    environment:
+      DATABASE_URL: postgresql://postgres:testing@db/mydb?schema=public&connect_timeout=300
+    volumes:
+      - ./api:/api
+      - /api/node_modules
+    depends_on:
+      - db
+    ports:
+      - "8020:8020"
+    expose:
+      - "8020"
+    command: sh -c 'cd api && yarn install --frozen-lockfile && yarn dev'
+    networks:
+      - backend
+      - frontend
+
+  prisma-studio:
+    image: node:18
+    environment:
+      DATABASE_URL: postgresql://postgres:testing@db/mydb?schema=public&connect_timeout=300
+    volumes:
+      - ./api:/prisma-studio
+      - /api/node_modules
+    depends_on:
+      - db
+    ports:
+      - "5555:5555"
+    expose:
+      - "5555"
+    command: sh -c 'cd prisma-studio && yarn install --frozen-lockfile && npx prisma studio'
+    networks:
+      - backend
+  web:
+    image: node:18-alpine3.14
+    environment:
+      REACT_APP_API_ENDPOINT: "http://localhost:8020"
+    volumes:
+      - ./web:/web
+      - /web/node_modules
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    expose:
+      - "3000"
+    command: sh -c 'cd web && yarn install --frozen-lockfile && yarn start'
+    networks:
+      - frontend
+volumes:
+  db:
+  api:
+  web:
+  prisma-studio:
+
+networks:
+  backend:
+  frontend:
