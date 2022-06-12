@@ -1,18 +1,5 @@
-import { createContext, ReactNode, useCallback, useState } from "react";
-
-interface User {
-  id?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-}
-
-interface IUserContext {
-  loggedIn: (user: User) => void;
-  user?: User;
-}
-
-type WithChildren<T = {}> = T & { children?: ReactNode };
+import { createContext, useCallback, useState } from "react";
+import { IUserContext, User, WithChildren } from "../core";
 
 export const UserContext = createContext<IUserContext>({
   user: undefined,
